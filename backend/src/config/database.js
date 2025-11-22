@@ -1,63 +1,56 @@
-const mysql = require('mysql2/promise');
-require('dotenv').config();
+const { Pool } = require("pg");
+require("dotenv").config();
 
-// Connection pool for better performance
-const pool = mysql.createPool({
+// PostgreSQL connection pool for Supabase
+const pool = new Pool({
   host: process.env.DB_HOST,
+  port: 5432,
   user: process.env.DB_USER,
   password: process.env.DB_PASS,
   database: process.env.DB_NAME,
-  port: process.env.DB_PORT || 3306,
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
-  enableKeepAlive: true,
-  keepAliveInitialDelay: 0
+  ssl: { rejectUnauthorized: false }
 });
 
-// Test connection and create table if needed
+
+// Initialize DB and ensure table exists
 const initDatabase = async () => {
   try {
-    const connection = await pool.getConnection();
-    console.log('✅ MySQL connected successfully');
+    const client = await pool.connect();
+    console.log("✅ PostgreSQL connected successfully");
 
-    // Create database if not exists
-    await connection.query(`CREATE DATABASE IF NOT EXISTS ${process.env.DB_NAME}`);
-    await connection.query(`USE ${process.env.DB_NAME}`);
-
-    // Create links table with proper schema
-    await connection.query(`
+    // Create table if not exists
+    await client.query(`
       CREATE TABLE IF NOT EXISTS links (
-        id INT AUTO_INCREMENT PRIMARY KEY,
+        id SERIAL PRIMARY KEY,
         code VARCHAR(8) UNIQUE NOT NULL,
         target_url TEXT NOT NULL,
-        clicks INT DEFAULT 0,
-        last_clicked DATETIME NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        INDEX idx_code (code),
-        INDEX idx_created (created_at)
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        clicks INTEGER DEFAULT 0,
+        last_clicked TIMESTAMP NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
     `);
 
-    console.log('✅ Database tables initialized');
-    connection.release();
+    // Optional performance indexes
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_code ON links (code);`);
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_created ON links (created_at);`);
+
+    console.log("✅ Database tables initialized");
+    client.release();
   } catch (error) {
-    console.error('❌ Database initialization error:', error);
+    console.error("❌ Database initialization error:", error);
     throw error;
   }
 };
 
-// Execute query helper
+// Query helper
 const executeQuery = async (query, params = []) => {
   try {
-    const [rows] = await pool.query(query, params);
-
-    return rows;
+    const result = await pool.query(query, params);
+    return result.rows; // PostgreSQL returns data in rows
   } catch (error) {
     console.error("Query error:", error);
     throw error;
   }
 };
-
 
 module.exports = { pool, initDatabase, executeQuery };
