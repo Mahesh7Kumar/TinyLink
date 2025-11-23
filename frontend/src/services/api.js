@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-const API_BASE = import.meta.env.PROD
-  ? "https://your-live-backend.com"
+const API_BASE = import.meta.env.VITE_PROD
+  ? import.meta.env.VITE_PROD
   : "http://localhost:5000";
 
 
