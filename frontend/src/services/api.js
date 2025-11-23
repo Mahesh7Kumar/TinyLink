@@ -1,16 +1,15 @@
 import axios from 'axios';
 
-const API_BASE = import.meta.env.VITE_PROD
-  ? import.meta.env.VITE_PROD
-  : "http://localhost:5000";
-
+const API_BASE = import.meta.env.VITE_PROD || "http://localhost:5000";
 
 const api = axios.create({
   baseURL: API_BASE,
   headers: {
     'Content-Type': 'application/json'
-  }
+  },
+  withCredentials: true // only if backend uses credentials
 });
+
 
 // Add response interceptor for consistent error handling
 api.interceptors.response.use(
