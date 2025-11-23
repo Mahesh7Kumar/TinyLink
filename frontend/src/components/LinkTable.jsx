@@ -3,9 +3,7 @@ import { Trash2, Copy, ExternalLink, Settings } from "lucide-react";
 import { copyToClipboard, truncateUrl, formatDate } from "../utils/helpers";
 import { Link2 } from 'lucide-react';
 
-const API_BASE = import.meta.env.VITE_PROD
-  ? "https://your-backend-url.com"
-  : "http://localhost:5000";
+const API_BASE = import.meta.env.VITE_PROD || 'http://localhost:5000';
 
 const LinkTable = ({ links, onDelete }) => {
   const formatViews = (clicks) => {

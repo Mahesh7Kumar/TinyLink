@@ -1,12 +1,11 @@
 const { Pool } = require("pg");
 require("dotenv").config();
 
-// PostgreSQL connection pool for Supabase
+// PostgreSQL connection pool (works with Supabase)
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
 });
-
 
 // Initialize DB and ensure table exists
 const initDatabase = async () => {
@@ -14,7 +13,6 @@ const initDatabase = async () => {
     const client = await pool.connect();
     console.log("✅ PostgreSQL connected successfully");
 
-    // Create table if not exists
     await client.query(`
       CREATE TABLE IF NOT EXISTS links (
         id SERIAL PRIMARY KEY,
@@ -26,7 +24,6 @@ const initDatabase = async () => {
       );
     `);
 
-    // Optional performance indexes
     await client.query(`CREATE INDEX IF NOT EXISTS idx_code ON links (code);`);
     await client.query(`CREATE INDEX IF NOT EXISTS idx_created ON links (created_at);`);
 
@@ -38,13 +35,13 @@ const initDatabase = async () => {
   }
 };
 
-// Query helper
+// ✅ FIXED: return full result, not only rows
 const executeQuery = async (query, params = []) => {
   try {
     const result = await pool.query(query, params);
-    return result.rows; // PostgreSQL returns data in rows
+    return result; // gives rows, rowCount, fields
   } catch (error) {
-    console.error("Query error:", error);
+    console.error("❌ Query error:", error);
     throw error;
   }
 };
